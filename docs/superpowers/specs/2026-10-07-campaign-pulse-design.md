@@ -6,8 +6,7 @@ Source requirements: `campaign_req.pages` (4 epics, 8 stories). Sample data: `co
 ## Context
 A Streamlit dashboard where marketers upload cross-platform ad CSVs (or use a generated 30-day fallback), filter them, and see KPIs, charts and rule-based insights. Python >=3.10, Streamlit >=1.30, Pandas >=2.0, Plotly >=5.18, managed with `uv`.
 
-**Scope now:** Epics 1-3 + Story 4.1 (rule-based insights).
-**Parked by user decision:** Story 4.2 "Ask AI". The app shows an "Ask AI" tab placeholder ("coming soon"). There is no `query.py` yet.
+**Current scope:** Epics 1-3, Story 4.1 (rule-based insights), and Story 4.2 (Ask AI). Ask AI was originally deferred and is now implemented with OpenAI; see [Ask AI design](2026-10-07-ask-ai-design.md).
 
 ## Findings from the sample file
 - Columns: `Date, Platform, Campaign, Spend, Clicks, Conversions, Revenue`. Daily rows, 3 platforms (Google, Meta, LinkedIn), one campaign each, dates from 2026-01-01.
@@ -44,6 +43,7 @@ Campaign_Pulse_App/
     filters.py            # date presets, platform/campaign/min-spend filtering (pure)
     charts.py             # Plotly figures: platform bars, funnel, time series (+7d MA)
     insights.py           # rule-based callouts (pure)
+    query.py              # filtered summaries and server-side OpenAI Ask AI
   tests/                  # pytest for data, metrics, filters, insights
   sample_data/            # campaign_sample.csv
   docs/superpowers/specs/ # this spec
@@ -67,5 +67,5 @@ Campaign_Pulse_App/
 - Filters (presets, multiselects, min spend) work, the exported CSV matches the filtered view, and an invalid CSV shows the error and template.
 - Visual check of all tabs in a browser.
 
-## Open items
-- Story 4.2 "Ask AI" is deferred. Revisit the approach later (rule-based, or optional Claude via `ANTHROPIC_API_KEY`).
+## Ask AI follow-up
+- Story 4.2 is implemented using `gpt-4o-mini`. See the [Ask AI design](2026-10-07-ask-ai-design.md) for configuration, limits and outstanding live verification.

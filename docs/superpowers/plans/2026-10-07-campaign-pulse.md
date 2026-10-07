@@ -1,5 +1,7 @@
 # Campaign Pulse Implementation Plan
 
+> Historical dashboard implementation plan. Its Ask AI deferral and placeholder snippets are superseded by the [Ask AI implementation record](2026-10-07-ask-ai.md). Preserve the original steps as historical context.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a `uv`-managed Streamlit dashboard that ingests ad-campaign CSVs (or a generated 30-day fallback), filters them, and shows KPIs, charts and rule-based insights.
@@ -19,7 +21,7 @@
 - CTR is omitted (with a caption) when Impressions is absent. The funnel is Clicks -> (Landing Page Visits if present) -> Conversions.
 - Date presets anchor to the maximum date in the data, not today.
 - Overview shows exactly six `st.metric` cards: Total Spend, Total Revenue, ROAS, Avg CPA, Avg CPC, Conversions.
-- Story 4.2 "Ask AI" is parked: the tab shows a "coming soon" placeholder only. Do not create `query.py` or call any LLM.
+- Original scope deferred Story 4.2. That restriction is superseded by the approved OpenAI Ask AI feature; see `2026-10-07-ask-ai.md`.
 - Input is CSV only. Never commit secrets; `.env` is git-ignored.
 - Every commit message ends with the trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` (pass it as a second `-m`).
 - Do not pass `use_container_width` / `width` to `st.dataframe` / `st.plotly_chart` (the parameter name changed across Streamlit versions); accept the defaults.
