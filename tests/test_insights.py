@@ -30,3 +30,11 @@ def test_single_platform_asks_for_more_platforms(sample_df):
     out = insights.generate_insights(sample_df[sample_df["Platform"] == "Google"])
     assert len(out) == 1
     assert out[0].level == "info" and "Google" in out[0].text
+
+
+def test_cpa_tie_gives_no_least_efficient_or_budget_advice(sample_df):
+    df = sample_df[sample_df["Platform"].isin(["Google", "Meta"])].copy()
+    df["Spend"], df["Conversions"] = 100.0, 10
+    out = insights.generate_insights(df)
+    assert not any(i.level == "warning" for i in out)
+    assert not any(i.level == "info" for i in out)

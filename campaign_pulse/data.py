@@ -55,6 +55,23 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     return renamed.loc[:, ~renamed.columns.duplicated()]
 
 
+# Candidate whole-column date formats. ISO first. For slash dates that are ambiguous
+# (every first number <= 12) month-first (US) wins over day-first.
+_DATE_FORMATS = ["ISO8601", "%m/%d/%Y", "%d/%m/%Y", "%d.%m.%Y", "%d-%m-%Y"]
+
+
+def _parse_dates(col: pd.Series) -> pd.Series:
+    """Parse a column with ONE format (the one matching most cells), never cell by cell."""
+    text = col.astype("string").str.strip()
+    best, best_n = None, -1
+    for fmt in _DATE_FORMATS:
+        parsed = pd.to_datetime(text, errors="coerce", format=fmt, utc=True)
+        n = int(parsed.notna().sum())
+        if n > best_n:  # strict ">" keeps the earlier (month-first) candidate on ties
+            best, best_n = parsed, n
+    return best.dt.tz_localize(None).dt.normalize().astype("datetime64[ns]")
+
+
 def clean(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     """Validate and coerce a raw frame. Returns (clean frame, rows dropped)."""
     df = normalize_columns(df)
@@ -65,19 +82,20 @@ def clean(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     df = df[REQUIRED + [c for c in OPTIONAL if c in df.columns]].copy()
     before = len(df)
 
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce", format="mixed").dt.normalize()
+    df["Date"] = _parse_dates(df["Date"])
     for col in NUMERIC_COLUMNS:
         if col not in df.columns:
             continue
         if not pd.api.types.is_numeric_dtype(df[col]):
             df[col] = df[col].astype(str).str.replace(r"[$€£,\s]", "", regex=True)
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+        df[col] = pd.to_numeric(df[col], errors="coerce").replace([np.inf, -np.inf], np.nan)
     for col in ("Platform", "Campaign"):
-        df[col] = df[col].astype(str).str.strip()
+        # "string" dtype keeps blanks as NA on pandas 2 and 3 alike; objects afterwards.
+        text = df[col].astype("string").str.strip()
+        df[col] = text.where(text.notna() & (text != ""), np.nan).astype(object)
 
-    df = df.dropna(subset=["Date", *_REQUIRED_NUMERIC])
+    df = df.dropna(subset=["Date", "Platform", "Campaign", *_REQUIRED_NUMERIC])
     df = df[(df[_REQUIRED_NUMERIC] >= 0).all(axis=1)]
-    df = df[~df["Platform"].str.lower().isin(["", "nan"])]
     if df.empty:
         raise DataError("No valid rows found. Check dates and that numeric columns contain numbers.")
 
@@ -88,9 +106,15 @@ def clean(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
 def parse_csv(raw: bytes) -> tuple[pd.DataFrame, int]:
     """Parse uploaded CSV bytes into a clean frame. Raises DataError on bad input."""
     try:
-        df = pd.read_csv(io.BytesIO(raw), encoding="utf-8-sig")
+        try:
+            df = pd.read_csv(io.BytesIO(raw), encoding="utf-8-sig")
+        except UnicodeDecodeError:
+            # Excel's "CSV (Comma delimited)" is cp1252, not UTF-8.
+            df = pd.read_csv(io.BytesIO(raw), encoding="cp1252")
     except (pd.errors.EmptyDataError, pd.errors.ParserError, UnicodeDecodeError) as exc:
         raise DataError(f"Could not read the file as CSV: {exc}") from exc
+    if len(df.columns) == 1 and ";" in str(df.columns[0]):
+        raise DataError("This file uses semicolons as separators. Re-export it as a comma-separated CSV.")
     return clean(df)
 
 

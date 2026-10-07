@@ -45,7 +45,7 @@ def generate_insights(df: pd.DataFrame) -> list[Insight]:
             out.append(Insight("warning", f"{row['Platform']} spent {money(row['Spend'])} with no conversions."))
     else:
         with_cpa = plat.dropna(subset=["CPA"])
-        if len(with_cpa) >= 2:
+        if len(with_cpa) >= 2 and with_cpa["CPA"].max() != with_cpa["CPA"].min():
             worst = with_cpa.loc[with_cpa["CPA"].idxmax()]
             out.append(
                 Insight("warning", f"Least efficient: {worst['Platform']} has the highest CPA at {money(worst['CPA'])}.")

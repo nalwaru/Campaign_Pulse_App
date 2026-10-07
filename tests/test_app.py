@@ -31,3 +31,11 @@ def test_selecting_no_platforms_shows_warning_not_traceback():
     at.sidebar.multiselect[0].set_value([]).run()
     assert not at.exception
     assert len(at.warning) >= 1
+
+
+def test_semicolon_upload_shows_specific_error_not_traceback():
+    raw = b"Date;Platform;Campaign;Spend;Clicks;Conversions;Revenue\n2026-01-01;Google;A;10;1;1;5\n"
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    at.sidebar.file_uploader[0].set_value(("semi.csv", raw, "text/csv")).run()
+    assert not at.exception
+    assert any("semicolons" in e.value for e in at.error)

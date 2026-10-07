@@ -59,3 +59,12 @@ def multiple(value: float) -> str:
 
 def pct(value: float) -> str:
     return "-" if pd.isna(value) else f"{value:.2%}"
+
+
+def count(value: float) -> str:
+    """Whole numbers without decimals, fractional values with up to one decimal."""
+    if pd.isna(value):
+        return "-"
+    if float(value).is_integer():
+        return f"{int(value):,}"
+    return f"{value:,.1f}"

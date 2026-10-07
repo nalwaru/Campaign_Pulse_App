@@ -67,3 +67,10 @@ def test_formatters():
     assert metrics.multiple(float("nan")) == "-"
     assert metrics.pct(0.04) == "4.00%"
     assert metrics.pct(float("nan")) == "-"
+
+
+def test_count_formats_whole_and_fractional_numbers():
+    assert metrics.count(559.0) == "559"
+    assert metrics.count(1234567) == "1,234,567"
+    assert metrics.count(3.2) == "3.2"
+    assert metrics.count(float("nan")) == "-"

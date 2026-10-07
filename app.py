@@ -75,7 +75,7 @@ def render_overview(filtered: pd.DataFrame) -> None:
         ("ROAS", metrics.multiple(s["ROAS"])),
         ("Avg CPA", metrics.money(s["CPA"])),
         ("Avg CPC", metrics.money(s["CPC"])),
-        ("Conversions", f"{int(s['Conversions']):,}"),
+        ("Conversions", metrics.count(s['Conversions'])),
     ]
     for col, (label, value) in zip(st.columns(6), cards):
         col.metric(label, value)
